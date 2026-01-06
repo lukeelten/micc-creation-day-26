@@ -1,0 +1,8 @@
+  {
+    "servers": {
+      "gopls": {
+        "url": "http://localhost:8092",
+        "type": "http"
+      }
+    }
+  }
