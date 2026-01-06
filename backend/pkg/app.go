@@ -3,8 +3,10 @@ package pkg
 import (
 	"context"
 	"net/http"
+	"os"
 
 	"github.com/pocketbase/pocketbase"
+	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -19,6 +21,8 @@ func NewApplication() *Application {
 	pb.OnServe().BindFunc(func(e *core.ServeEvent) error {
 
 		go runMetricsServer(pb.RootCmd.Context())
+
+		e.Router.GET("/{path...}", apis.Static(os.DirFS("./public"), true))
 
 		return e.Next()
 	})
