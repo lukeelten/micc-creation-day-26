@@ -13,9 +13,12 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill, syscall.SIGTERM, syscall.SIGQUIT)
 	defer stop()
 
-	app := pkg.NewApplication()
+	app, err := pkg.NewApplication()
+	if err != nil {
+		panic(err)
+	}
 
-	err := app.Run(ctx)
+	err = app.Run(ctx)
 
 	if err != nil {
 		panic(err)

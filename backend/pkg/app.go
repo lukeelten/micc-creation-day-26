@@ -9,15 +9,21 @@ import (
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"k8s.io/client-go/kubernetes"
 )
 
 type Application struct {
-	Pb *pocketbase.PocketBase
+	Pb        *pocketbase.PocketBase
+	K8sClient *kubernetes.Clientset
 }
 
-func NewApplication() *Application {
-	pb := pocketbase.New()
+func NewApplication() (*Application, error) {
+	clientset, err := NewKubernetesClient()
+	if err != nil {
+		return nil, err
+	}
 
+	pb := pocketbase.New()
 	pb.OnServe().BindFunc(func(e *core.ServeEvent) error {
 
 		go runMetricsServer(pb.RootCmd.Context())
@@ -28,8 +34,9 @@ func NewApplication() *Application {
 	})
 
 	return &Application{
-		Pb: pb,
-	}
+		Pb:        pb,
+		K8sClient: clientset,
+	}, nil
 }
 
 func (a *Application) Run(ctx context.Context) error {
