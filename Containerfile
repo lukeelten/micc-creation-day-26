@@ -22,7 +22,7 @@ FROM registry.access.redhat.com/ubi10:latest
 WORKDIR /app
 
 COPY --from=backend /app/backend /app/backend
-COPY --from=frontend /app/dist/ /app/public/
+COPY --from=frontend /app/dist/demo/ /app/public/
 
 VOLUME /data
 
