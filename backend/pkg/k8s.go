@@ -1,7 +1,7 @@
 package pkg
 
 import (
-	"flag"
+	"log/slog"
 	"os"
 	"path/filepath"
 
@@ -11,35 +11,45 @@ import (
 	"k8s.io/client-go/util/homedir"
 )
 
-func NewKubernetesClient() (*kubernetes.Clientset, error) {
+func NewKubernetesClient(logger *slog.Logger, kubeconfigFlag *string) (*kubernetes.Clientset, error) {
 	if _, err := os.Stat("/var/run/secrets/kubernetes.io/serviceaccount/token"); err == nil {
-		return inClusterClient()
+		logger.Info("Creating InCluster kubernetes client")
+		return inClusterClient(logger)
 	}
 
-	return externalClient()
+	return externalClient(logger, *kubeconfigFlag)
 }
 
-func inClusterClient() (*kubernetes.Clientset, error) {
+func inClusterClient(logger *slog.Logger) (*kubernetes.Clientset, error) {
 	config, err := rest.InClusterConfig()
 	if err != nil {
+		logger.Error("Failed to create in-cluster config", "error", err)
 		return nil, err
 	}
 
 	return kubernetes.NewForConfig(config)
 }
 
-func externalClient() (*kubernetes.Clientset, error) {
-	var kubeconfig *string
-	if home := homedir.HomeDir(); home != "" {
-		kubeconfig = flag.String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
+func externalClient(logger *slog.Logger, manualPath string) (*kubernetes.Clientset, error) {
+	var path string
+
+	kubeconfigEnv, hasKubeconfigEnv := os.LookupEnv("KUBECONFIG")
+	if hasKubeconfigEnv {
+		path = kubeconfigEnv
+	} else if len(manualPath) > 0 {
+		path = manualPath
+	} else if _, err := os.Stat("./kubeconfig"); err == nil {
+		path = "./kubeconfig"
 	} else {
-		kubeconfig = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
+		path = filepath.Join(homedir.HomeDir(), ".kube", "config")
 	}
-	flag.Parse()
+
+	logger.Info("Creating external kubernetes client", slog.String("kubeconfigPath", path))
 
 	// use the current context in kubeconfig
-	config, err := clientcmd.BuildConfigFromFlags("", *kubeconfig)
+	config, err := clientcmd.BuildConfigFromFlags("", path)
 	if err != nil {
+		logger.Error("Failed to build config from flags", "error", err)
 		return nil, err
 	}
 

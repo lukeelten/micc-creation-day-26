@@ -4,10 +4,13 @@ import (
 	"context"
 	"net/http"
 	"os"
+	"strings"
 
+	"github.com/lukeelten/micc-creation-day-26/backend/pkg/utils"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
+	"github.com/pocketbase/pocketbase/plugins/migratecmd"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"k8s.io/client-go/kubernetes"
 )
@@ -18,29 +21,56 @@ type Application struct {
 }
 
 func NewApplication() (*Application, error) {
-	clientset, err := NewKubernetesClient()
-	if err != nil {
-		return nil, err
-	}
-
 	pb := pocketbase.New()
+	kubeconfigFlag := pb.RootCmd.PersistentFlags().String("kubeconfig", "", "(optional) Set manual path to kubeconfig")
+
+	// Start metrics server
 	pb.OnServe().BindFunc(func(e *core.ServeEvent) error {
-
+		e.App.Logger().Info("Starting metrics server on :9090")
 		go runMetricsServer(pb.RootCmd.Context())
+		return e.Next()
+	})
 
-		e.Router.GET("/{path...}", apis.Static(os.DirFS("./public"), true))
+	// Serve static files
+	pb.OnServe().BindFunc(func(e *core.ServeEvent) error {
+		if _, err := os.Stat("./public"); err == nil {
+			e.App.Logger().Info("Serving static files from ./public")
+			e.Router.GET("/{path...}", apis.Static(os.DirFS("./public"), true))
+		}
 
 		return e.Next()
 	})
 
+	// Bootstrap kubernetes
+	pb.OnBootstrap().BindFunc(func(e *core.BootstrapEvent) error {
+		clientset, err := NewKubernetesClient(e.App.Logger(), kubeconfigFlag)
+		if err != nil {
+			e.App.Logger().Error("Failed to create kubernetes client", "error", err)
+			return err
+		}
+
+		pb.Store().Set(utils.StoreClient, clientset)
+
+		return e.Next()
+	})
+
+	// loosely check if it was executed using "go run"
+	isGoRun := strings.HasPrefix(os.Args[0], os.TempDir())
+
+	migratecmd.MustRegister(pb, pb.RootCmd, migratecmd.Config{
+		// enable auto creation of migration files when making collection changes in the Dashboard
+		// (the isGoRun check is to enable it only during development)
+		Automigrate: isGoRun,
+	})
+
 	return &Application{
-		Pb:        pb,
-		K8sClient: clientset,
+		Pb: pb,
 	}, nil
 }
 
 func (a *Application) Run(ctx context.Context) error {
 	a.Pb.RootCmd.SetContext(ctx)
+	a.Pb.Store().Set(utils.StoreContext, ctx)
 
 	return a.Pb.Start()
 }
