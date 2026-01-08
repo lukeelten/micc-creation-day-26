@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	_ "github.com/lukeelten/micc-creation-day-26/backend/migrations"
 	"github.com/lukeelten/micc-creation-day-26/backend/pkg/utils"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"
@@ -36,6 +37,34 @@ func NewApplication() (*Application, error) {
 		if _, err := os.Stat("./public"); err == nil {
 			e.App.Logger().Info("Serving static files from ./public")
 			e.Router.GET("/{path...}", apis.Static(os.DirFS("./public"), true))
+		}
+
+		return e.Next()
+	})
+
+	// Create superuser if requested via env vars
+	pb.OnServe().BindFunc(func(e *core.ServeEvent) error {
+		email, hasEmail := os.LookupEnv("SUPERUSER_EMAIL")
+		password, hasPassword := os.LookupEnv("SUPERUSER_PASSWORD")
+		if !hasEmail || !hasPassword {
+			return e.Next() // skip creating superuser if env vars are not set
+		}
+
+		superusers, err := e.App.FindCollectionByNameOrId(core.CollectionNameSuperusers)
+		if err != nil {
+			return err
+		}
+
+		record := core.NewRecord(superusers)
+
+		// note: the values can be eventually loaded via os.Getenv(key)
+		// or from a special local config file
+		record.Set("email", email)
+		record.Set("password", password)
+
+		err = e.App.Save(record)
+		if err != nil {
+			return err
 		}
 
 		return e.Next()
