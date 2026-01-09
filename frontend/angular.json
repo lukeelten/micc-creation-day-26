@@ -10,6 +10,9 @@
                     "style": "scss"
                 }
             },
+            "i18n": {
+                "sourceLocale": "de"
+            },
             "root": "",
             "sourceRoot": "src",
             "prefix": "app",
@@ -21,7 +24,8 @@
                         "index": "src/index.html",
                         "browser": "src/main.ts",
                         "polyfills": [
-                            "zone.js"
+                            "@angular/localize/init",
+                            "@angular/common/locales/global/de"
                         ],
                         "tsConfig": "tsconfig.app.json",
                         "inlineStyleLanguage": "scss",
@@ -88,6 +92,6 @@
         }
     },
     "cli": {
-      "analytics": false
+        "analytics": false
     }
 }

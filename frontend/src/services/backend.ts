@@ -1,4 +1,4 @@
-import { computed, Injectable, signal } from '@angular/core';
+import { computed, Injectable, Signal, signal } from '@angular/core';
 import PocketBase, { LocalAuthStore, RecordService } from 'pocketbase';
 import { environment } from '../environments/environment';
 import { Observable } from 'rxjs';
@@ -10,7 +10,7 @@ import { Collections, TypedPocketBase, UsersResponse } from '../models';
 export class BackendService {
   private readonly pocketbase: TypedPocketBase;
 
-  public readonly isLoggedIn;
+  public readonly isLoggedIn: Signal<boolean>;
   private readonly isLoggedIn$ = signal(false);
 
   private user = computed<UsersResponse>(() => {
@@ -49,6 +49,10 @@ export class BackendService {
           }
         );
     });
+  }
+
+  public getRecordService<T>(collectionName: string): RecordService<T> {
+    return this.pocketbase.collection<T>(collectionName);
   }
 
   public logout() {

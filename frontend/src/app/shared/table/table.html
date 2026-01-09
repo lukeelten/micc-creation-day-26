@@ -1,0 +1,53 @@
+<p-table
+  [value]="data()"
+  [rows]="rows()"
+  [globalFilterFields]="searchableFields()"
+  [paginator]="true"
+  [rowsPerPageOptions]="rowsPerPageOptions()"
+  [showCurrentPageReport]="true"
+  [totalRecords]="totalRecords()"
+  sortMode="single"
+  currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+  [rowHover]="true"
+  [loading]="loading()"
+  [dataKey]="dataKey()"
+>
+  <ng-template #caption>
+    <div class="flex items-center justify-between">
+      <h5 class="m-0">{{ title() }}</h5>
+      @if (searchable()) {
+        <p-iconfield>
+          <p-inputicon class="pi pi-search" />
+          <input pInputText type="text" [(ngModel)]="searchString" (change)="onSearchChange()" placeholder="Search..." />
+        </p-iconfield>
+      }
+    </div>
+  </ng-template>
+
+  <ng-template #header>
+    <tr>
+      @for (col of columns(); track col.field) {
+        @if (col.sortable) {
+          <th [pSortableColumn]="col.field">
+            {{ col.label }}
+            <p-sortIcon [field]="col.field"></p-sortIcon>
+          </th>
+        } @else {
+          <th>{{ col.label }}</th>
+        }
+      }
+    </tr>
+  </ng-template>
+
+  <ng-template #body let-item>
+    <tr (click)="onRowClick($event, item)">
+      @for (col of columns(); track col.field) {
+        @if (col.transform) {
+          <td>{{ col.transform(item[col.field]) }}</td>
+        } @else {
+          <td>{{ item[col.field] }}</td>
+        }
+      }
+    </tr>
+  </ng-template>
+</p-table>

@@ -11,10 +11,8 @@ export enum Collections {
 	Mfas = "_mfas",
 	Otps = "_otps",
 	Superusers = "_superusers",
-	Datasets = "datasets",
 	Events = "events",
-	Jobs = "jobs",
-	Results = "results",
+	Runs = "runs",
 	Users = "users",
 }
 
@@ -96,53 +94,28 @@ export type SuperusersRecord = {
 	verified?: boolean
 }
 
-export type DatasetsRecord = {
+export type EventsRecord = {
 	created: IsoAutoDateString
-	description?: string
 	id: string
-	location?: string
-	name?: string
-	sizeBytes?: number
-	updated: IsoAutoDateString
-}
-
-export type EventsRecord<TinvolvedObject = unknown> = {
-	count?: number
-	created: IsoAutoDateString
-	eventTime?: IsoDateString
-	firstTimestamp?: IsoDateString
-	id: string
-	involvedObject?: null | TinvolvedObject
-	job?: RecordIdString
-	lastTimestamp?: IsoDateString
 	message?: string
-	reason?: string
-	type?: string
-	uid?: string
+	run?: RecordIdString
 	updated: IsoAutoDateString
 }
 
-export type JobsRecord<Textra = unknown> = {
-	author: string
-	created: IsoAutoDateString
-	data: RecordIdString
-	extra?: null | Textra
-	finishedTimestamp?: IsoDateString
-	id: string
-	name: string
-	state?: string
-	successful?: boolean
-	updated: IsoAutoDateString
+export enum RunsStatusOptions {
+	"CREATED" = "CREATED",
+	"FAILED" = "FAILED",
+	"SCHEDULED" = "SCHEDULED",
+	"COMPLETED" = "COMPLETED",
+	"PROCESSING" = "PROCESSING",
 }
-
-export type ResultsRecord = {
+export type RunsRecord = {
+	author?: RecordIdString
 	created: IsoAutoDateString
 	id: string
-	job: RecordIdString
-	location?: string
 	message?: string
 	runtimeSeconds?: number
-	startTimestamp?: IsoDateString
+	status?: RunsStatusOptions
 	updated: IsoAutoDateString
 }
 
@@ -165,10 +138,8 @@ export type ExternalauthsResponse<Texpand = unknown> = Required<ExternalauthsRec
 export type MfasResponse<Texpand = unknown> = Required<MfasRecord> & BaseSystemFields<Texpand>
 export type OtpsResponse<Texpand = unknown> = Required<OtpsRecord> & BaseSystemFields<Texpand>
 export type SuperusersResponse<Texpand = unknown> = Required<SuperusersRecord> & AuthSystemFields<Texpand>
-export type DatasetsResponse<Texpand = unknown> = Required<DatasetsRecord> & BaseSystemFields<Texpand>
-export type EventsResponse<TinvolvedObject = unknown, Texpand = unknown> = Required<EventsRecord<TinvolvedObject>> & BaseSystemFields<Texpand>
-export type JobsResponse<Textra = unknown, Texpand = unknown> = Required<JobsRecord<Textra>> & BaseSystemFields<Texpand>
-export type ResultsResponse<Texpand = unknown> = Required<ResultsRecord> & BaseSystemFields<Texpand>
+export type EventsResponse<Texpand = unknown> = Required<EventsRecord> & BaseSystemFields<Texpand>
+export type RunsResponse<Texpand = unknown> = Required<RunsRecord> & BaseSystemFields<Texpand>
 export type UsersResponse<Texpand = unknown> = Required<UsersRecord> & AuthSystemFields<Texpand>
 
 // Types containing all Records and Responses, useful for creating typing helper functions
@@ -179,10 +150,8 @@ export type CollectionRecords = {
 	_mfas: MfasRecord
 	_otps: OtpsRecord
 	_superusers: SuperusersRecord
-	datasets: DatasetsRecord
 	events: EventsRecord
-	jobs: JobsRecord
-	results: ResultsRecord
+	runs: RunsRecord
 	users: UsersRecord
 }
 
@@ -192,10 +161,8 @@ export type CollectionResponses = {
 	_mfas: MfasResponse
 	_otps: OtpsResponse
 	_superusers: SuperusersResponse
-	datasets: DatasetsResponse
 	events: EventsResponse
-	jobs: JobsResponse
-	results: ResultsResponse
+	runs: RunsResponse
 	users: UsersResponse
 }
 

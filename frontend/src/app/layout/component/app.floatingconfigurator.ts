@@ -1,4 +1,4 @@
-import {Component, computed, inject, input} from '@angular/core';
+import {ChangeDetectionStrategy, Component, computed, inject, input} from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { StyleClassModule } from 'primeng/styleclass';
 import { AppConfigurator } from './app.configurator';
@@ -8,6 +8,8 @@ import {CommonModule} from "@angular/common";
 @Component({
     selector: 'app-floating-configurator',
     imports: [CommonModule, ButtonModule, StyleClassModule, AppConfigurator],
+    standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
         <div class="flex gap-4 top-8 right-8" [ngClass]="{'fixed':float()}">
             <p-button type="button" (onClick)="toggleDarkMode()" [rounded]="true" [icon]="isDarkTheme() ? 'pi pi-moon' : 'pi pi-sun'" severity="secondary" />

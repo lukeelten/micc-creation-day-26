@@ -1,0 +1,16 @@
+@if (status() !== 'UNKNOWN') {
+  <p-stepper [value]="currentStepIndex()">
+    <p-step-list>
+      @for (step of steps; track step) {
+        @if (step.key === 'FAILED') {
+          @if (status() === 'FAILED') {
+            <p-step [value]="step.value" style="color: red;">{{ step.key }}</p-step> 
+          }
+        } @else {
+          <p-step [value]="step.value">{{ step.key }}</p-step> 
+        }
+      }
+    </p-step-list>
+
+  </p-stepper>
+}
