@@ -1,13 +1,16 @@
 import { StepperComponent } from '@/shared/stepper/stepper';
-import { ChangeDetectionStrategy, Component, computed, inject, OnDestroy, OnInit, resource, Signal, signal } from '@angular/core';
+import { TimelineComponent } from '@/shared/timeline/timeline';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, OnDestroy, OnInit, resource, Signal, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { UnsubscribeFunc } from 'pocketbase';
-import { EventsResponse, RunsResponse, RunsStatusOptions } from 'src/models';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { EventsResponse, RunsResponse } from 'src/models';
 import { EventsRepository, RunsRepository } from 'src/services/repositories';
+import { formatDate } from '@angular/common';
 
 @Component({
     selector: 'app-view',
-    imports: [StepperComponent],
+    imports: [StepperComponent, TimelineComponent, ProgressSpinnerModule],
     templateUrl: './view.html',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush
@@ -20,6 +23,7 @@ export class ViewRun implements OnInit, OnDestroy {
     private readonly route = inject(ActivatedRoute);
 
     public readonly runId = signal<string>('');
+    public readonly authorName = signal<string>('');
 
     public readonly runResource = resource({
         params: () => ({id: this.runId()}),
@@ -55,6 +59,17 @@ export class ViewRun implements OnInit, OnDestroy {
 
         return [];
     });
+
+    constructor() {
+        effect(() => {
+            const run = this.run();
+            if (run && run.author) {
+                this.runsRepo.getAuthorName(run.author).then(name => {
+                    this.authorName.set(name);
+                });
+            }
+        });
+    }
     
 
     ngOnInit(): void {
@@ -80,6 +95,14 @@ export class ViewRun implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {
         this.unsubscribeFuncs.forEach((func) => func());
+    }
+
+    public formatDate(dateString: string | null | undefined, formatStr: string, locale: string): string {
+        if (!dateString) {
+            return '';
+        }
+
+        return formatDate(dateString, formatStr, locale);
     }
 
     private loadRun(runId: string): Promise<RunsResponse> {

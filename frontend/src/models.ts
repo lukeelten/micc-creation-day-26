@@ -94,11 +94,20 @@ export type SuperusersRecord = {
 	verified?: boolean
 }
 
-export type EventsRecord = {
+export enum EventsTypeOptions {
+	"info" = "info",
+	"warn" = "warn",
+	"error" = "error",
+}
+export type EventsRecord<TadditionalData = unknown> = {
+	additionalData?: null | TadditionalData
+	additionalText?: string
 	created: IsoAutoDateString
+	description?: string
 	id: string
-	message?: string
-	run?: RecordIdString
+	run: RecordIdString
+	title: string
+	type: EventsTypeOptions
 	updated: IsoAutoDateString
 }
 
@@ -138,7 +147,7 @@ export type ExternalauthsResponse<Texpand = unknown> = Required<ExternalauthsRec
 export type MfasResponse<Texpand = unknown> = Required<MfasRecord> & BaseSystemFields<Texpand>
 export type OtpsResponse<Texpand = unknown> = Required<OtpsRecord> & BaseSystemFields<Texpand>
 export type SuperusersResponse<Texpand = unknown> = Required<SuperusersRecord> & AuthSystemFields<Texpand>
-export type EventsResponse<Texpand = unknown> = Required<EventsRecord> & BaseSystemFields<Texpand>
+export type EventsResponse<TadditionalData = unknown, Texpand = unknown> = Required<EventsRecord<TadditionalData>> & BaseSystemFields<Texpand>
 export type RunsResponse<Texpand = unknown> = Required<RunsRecord> & BaseSystemFields<Texpand>
 export type UsersResponse<Texpand = unknown> = Required<UsersRecord> & AuthSystemFields<Texpand>
 

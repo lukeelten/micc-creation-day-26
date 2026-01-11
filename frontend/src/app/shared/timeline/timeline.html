@@ -1,0 +1,16 @@
+<p-timeline [value]="timelineEvents()" align="alternate" class="customized-timeline">
+    <ng-template #marker let-event>
+      <span class="flex w-8 h-8 items-center justify-center text-black rounded-full z-10 shadow-sm">
+        <i [class]="event.icon"></i>
+      </span>
+    </ng-template>
+    <ng-template #content let-event>
+      <p-card [header]="event.title" [subheader]="event.created">
+        @if (event.description) {
+        <p>
+          {{ event.description }}
+        </p>
+        }
+      </p-card>
+    </ng-template>
+  </p-timeline>

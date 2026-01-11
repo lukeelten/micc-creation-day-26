@@ -1,7 +1,7 @@
 import { inject, Injectable } from "@angular/core";
 import { BackendService } from "./backend";
 import { RecordService } from "pocketbase";
-import { Collections, EventsResponse, RunsResponse } from "src/models";
+import { Collections, EventsResponse, RunsResponse, UsersResponse } from "src/models";
 
 @Injectable({
   providedIn: 'root'
@@ -30,6 +30,10 @@ export class RunsRepository {
   public getById(id: string) {
     return this.recordService.getOne(id);
   }
+
+  public getAuthorName(authorId: string): Promise<string> {
+    return this.backendService.getRecordService<UsersResponse>(Collections.Users).getOne(authorId).then(user => user.name);
+  }
 }
 
 @Injectable({
@@ -55,6 +59,4 @@ export class EventsRepository {
   public getRecordService() {
     return this.recordService;
   }
-
-
 }
