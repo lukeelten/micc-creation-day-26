@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	_ "github.com/lukeelten/micc-creation-day-26/backend/migrations"
+	"github.com/lukeelten/micc-creation-day-26/backend/pkg/controller"
 	"github.com/lukeelten/micc-creation-day-26/backend/pkg/utils"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"
@@ -79,6 +80,22 @@ func NewApplication() (*Application, error) {
 		}
 
 		pb.Store().Set(utils.StoreClient, clientset)
+
+		return e.Next()
+	})
+
+	// Run controller
+	pb.OnServe().BindFunc(func(e *core.ServeEvent) error {
+		runController, err := controller.NewRunController(pb)
+		if err != nil {
+			e.App.Logger().Error("Failed to create RunController", "error", err)
+			return err
+		}
+
+		if err := runController.Start(); err != nil {
+			e.App.Logger().Error("RunController exited with error", "error", err)
+			return err
+		}
 
 		return e.Next()
 	})
