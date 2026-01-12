@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"sync"
 	"time"
 
+	"github.com/lukeelten/micc-creation-day-26/backend/pkg/models"
 	"github.com/lukeelten/micc-creation-day-26/backend/pkg/utils"
 	"github.com/pocketbase/pocketbase"
 	"k8s.io/client-go/kubernetes"
@@ -16,6 +18,7 @@ type RunController struct {
 	Client *kubernetes.Clientset
 	Pb     *pocketbase.PocketBase
 	Ctx    context.Context
+	wg     sync.WaitGroup
 }
 
 func NewRunController(pb *pocketbase.PocketBase) (*RunController, error) {
@@ -38,9 +41,28 @@ func (rc *RunController) Start() error {
 		time.Sleep(2 * time.Second)
 		rc.Logger.Info("RunController started")
 
-		<-rc.Ctx.Done()
+		rc.Bootstrap()
+
+		rc.wg.Wait()
 		rc.Logger.Info("RunController stopped")
 	}()
+
+	return nil
+}
+
+func (rc *RunController) Bootstrap() error {
+	// Fetch all runs
+	allRuns, err := rc.Pb.FindAllRecords(models.CollectionsRuns)
+	if err != nil {
+		return err
+	}
+
+	for _, r := range allRuns {
+		runRecord := models.ConvertRunRecord(r)
+
+		runInstance := NewRunInstance(rc, runRecord)
+		rc.wg.Go(runInstance.Start)
+	}
 
 	return nil
 }

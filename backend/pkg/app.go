@@ -100,6 +100,11 @@ func NewApplication() (*Application, error) {
 		return e.Next()
 	})
 
+	err := SetupApi(pb)
+	if err != nil {
+		return nil, err
+	}
+
 	// loosely check if it was executed using "go run"
 	isGoRun := strings.HasPrefix(os.Args[0], os.TempDir())
 

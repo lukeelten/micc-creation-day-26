@@ -10,3 +10,16 @@ const (
 	CollectionsRuns          = "runs"
 	CollectionsUsers         = "users"
 )
+
+type UsersRecord struct {
+	Avatar          string `json:"avatar,omitempty"`
+	Created         string `json:"created"`
+	Email           string `json:"email"`
+	EmailVisibility bool   `json:"emailVisibility,omitempty"`
+	ID              string `json:"id"`
+	Name            string `json:"name,omitempty"`
+	Password        string `json:"password"`
+	TokenKey        string `json:"tokenKey"`
+	Updated         string `json:"updated"`
+	Verified        bool   `json:"verified,omitempty"`
+}
