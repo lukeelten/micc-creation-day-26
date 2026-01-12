@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 	"os"
 	"strings"
@@ -129,12 +130,22 @@ func (a *Application) Run(ctx context.Context) error {
 func runMetricsServer(ctx context.Context) {
 	mux := http.NewServeMux()
 	mux.Handle("/metrics", promhttp.Handler())
+	mux.Handle("/health", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	}))
 
 	server := &http.Server{
 		Addr:    ":9090",
-		Handler: promhttp.Handler(),
+		Handler: mux,
 	}
 
-	<-ctx.Done()
-	server.Shutdown(context.Background())
+	go func() {
+		<-ctx.Done()
+		server.Shutdown(context.Background())
+	}()
+
+	err := server.ListenAndServe()
+	if err != nil && err != http.ErrServerClosed {
+		slog.Default().Error("Error during metrics server shutdown", "err", err)
+	}
 }
