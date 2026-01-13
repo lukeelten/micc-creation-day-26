@@ -54,6 +54,7 @@ func main() {
 	realTask, ok := simuTasks[task]
 	if !ok {
 		slog.Default().Error("Unknown task", "task", task)
+		os.Exit(3)
 		return
 	}
 
@@ -68,7 +69,7 @@ func main() {
 	err := client.StartState(runId, task)
 	if err != nil {
 		slog.Default().Error("Failed to start state", "error", err)
-		return
+		os.Exit(4)
 	} else {
 		slog.Default().Info("State started successfully", "task", task)
 	}
@@ -81,13 +82,13 @@ func main() {
 			slog.Default().Error("Failed to update run status to failed", "error", err)
 		}
 
-		return
+		os.Exit(5)
 	}
 
 	err = client.StopState(runId, task)
 	if err != nil {
 		slog.Default().Error("Failed to stop state", "error", err)
-		return
+		os.Exit(6)
 	}
 
 	slog.Default().Info("Task completed successfully", "task", task)

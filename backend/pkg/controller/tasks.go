@@ -116,5 +116,62 @@ func (rc *RunController) runCreated(runRecord *core.Record) error {
 }
 
 func (rc *RunController) runProcessing(runRecord *core.Record) error {
+	runId := runRecord.Id
+	activeState, err := rc.GetActiveState(runId)
+	if err != nil {
+		rc.Logger.Error("Failed to get active state", "runId", runId, "error", err)
+		return err
+	}
+
+	if activeState != nil {
+		// Task still running, nothing to do
+		return nil
+	}
+
+	state, err := rc.GetLastCompletedState(runId)
+	if err != nil {
+		rc.Logger.Error("Failed to get last completed state", "runId", runId, "error", err)
+		return err
+	}
+
+	if state == nil {
+		rc.Logger.Warn("No completed states found", "runId", runId)
+		return nil
+	}
+
+	if state.Completed == nil {
+		// Task still running, nothing to do
+		return nil
+	}
+
+	switch state.Task {
+	case models.StatesTaskDownload:
+		_, err := rc.CreateKubernetesJob(runId, utils.TASK_CONVERT, utils.RandomDurationLimit(utils.TASK_CONVERT_MAX_DURATION))
+		if err != nil {
+			rc.Logger.ErrorContext(rc.Ctx, "Failed to create Kubernetes job for convert task", "runId", runId, "error", err)
+			return err
+		}
+
+	case models.StatesTaskConvert:
+		_, err := rc.CreateKubernetesJob(runId, utils.TASK_PROCESS, utils.RandomDurationLimit(utils.TASK_PROCESS_MAX_DURATION))
+		if err != nil {
+			rc.Logger.ErrorContext(rc.Ctx, "Failed to create Kubernetes job for process task", "runId", runId, "error", err)
+			return err
+		}
+
+	case models.StatesTaskProcess:
+		_, err := rc.CreateKubernetesJob(runId, utils.TASK_UPLOAD, utils.RandomDurationLimit(utils.TASK_UPLOAD_MAX_DURATION))
+		if err != nil {
+			rc.Logger.ErrorContext(rc.Ctx, "Failed to create Kubernetes job for upload task", "runId", runId, "error", err)
+			return err
+		}
+
+	case models.StatesTaskUpload:
+
+	default:
+		rc.Logger.Warn("Unknown state task", "runId", runId, "task", state.Task)
+		return nil
+	}
+
 	return nil
 }

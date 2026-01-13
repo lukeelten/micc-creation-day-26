@@ -4,7 +4,7 @@ import "os"
 
 const (
 	CONFIG_QUEUE_NAME = "demo"
-	CONFIG_IMAGE_NAME = "ghcr.io/lukeelten/micc-creation-day-26-simulator:latest"
+	CONFIG_IMAGE_NAME = "ghcr.io/lukeelten/micc-creation-day-26:latest"
 	DEFAULT_NAMESPACE = "creation-day26"
 )
 

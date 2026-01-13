@@ -53,6 +53,15 @@ func (rc *RunController) GetActiveState(runId string) (*models.StatesRecord, err
 		return nil, err
 	}
 
+	slices.SortFunc(records, func(a, b *models.StatesRecord) int {
+		if a.Created.Before(b.Created) {
+			return 1
+		} else if a.Created.After(b.Created) {
+			return -1
+		}
+		return 0
+	})
+
 	for _, state := range records {
 		if state.Completed == nil {
 			return state, nil
@@ -67,6 +76,15 @@ func (rc *RunController) GetLastCompletedState(runId string) (*models.StatesReco
 	if err != nil {
 		return nil, err
 	}
+
+	slices.SortFunc(records, func(a, b *models.StatesRecord) int {
+		if a.Created.Before(b.Created) {
+			return 1
+		} else if a.Created.After(b.Created) {
+			return -1
+		}
+		return 0
+	})
 
 	for _, state := range records {
 		if state.Completed == nil {

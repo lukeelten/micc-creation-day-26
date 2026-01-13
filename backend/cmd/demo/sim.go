@@ -22,6 +22,13 @@ func init() {
 }
 
 func downloadRunDataTask(c *client.Client, runId string, taskTime time.Duration) error {
+	sleepTime := utils.RandomDurationLimit(1 * time.Minute)
+	select {
+	case <-c.Ctx.Done():
+		return c.Ctx.Err()
+	case <-time.After(sleepTime):
+	}
+
 	c.UpdateRunStatusProcessing(runId)
 	return genericRunTask("Download Run Data", c, runId, taskTime)
 }
