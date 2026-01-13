@@ -35,7 +35,13 @@ func processDataTask(c *client.Client, runId string, taskTime time.Duration) err
 }
 
 func uploadResultsTask(c *client.Client, runId string, taskTime time.Duration) error {
-	return genericRunTask("Uploading Results", c, runId, taskTime)
+	err := genericRunTask("Uploading Results", c, runId, taskTime)
+	if err != nil {
+		return err
+	}
+
+	c.UpdateRunStatusComplete(runId)
+	return nil
 }
 
 func genericRunTask(taskName string, c *client.Client, runId string, taskTime time.Duration) error {

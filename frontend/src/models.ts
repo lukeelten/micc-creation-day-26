@@ -13,6 +13,7 @@ export enum Collections {
 	Superusers = "_superusers",
 	Events = "events",
 	Runs = "runs",
+	States = "states",
 	Users = "users",
 }
 
@@ -128,6 +129,21 @@ export type RunsRecord = {
 	updated: IsoAutoDateString
 }
 
+export enum StatesTaskOptions {
+	"download" = "download",
+	"convert" = "convert",
+	"process" = "process",
+	"upload" = "upload",
+}
+export type StatesRecord = {
+	completed?: IsoDateString
+	created: IsoAutoDateString
+	id: string
+	run?: RecordIdString
+	task?: StatesTaskOptions
+	updated: IsoAutoDateString
+}
+
 export type UsersRecord = {
 	avatar?: FileNameString
 	created: IsoAutoDateString
@@ -149,6 +165,7 @@ export type OtpsResponse<Texpand = unknown> = Required<OtpsRecord> & BaseSystemF
 export type SuperusersResponse<Texpand = unknown> = Required<SuperusersRecord> & AuthSystemFields<Texpand>
 export type EventsResponse<TadditionalData = unknown, Texpand = unknown> = Required<EventsRecord<TadditionalData>> & BaseSystemFields<Texpand>
 export type RunsResponse<Texpand = unknown> = Required<RunsRecord> & BaseSystemFields<Texpand>
+export type StatesResponse<Texpand = unknown> = Required<StatesRecord> & BaseSystemFields<Texpand>
 export type UsersResponse<Texpand = unknown> = Required<UsersRecord> & AuthSystemFields<Texpand>
 
 // Types containing all Records and Responses, useful for creating typing helper functions
@@ -161,6 +178,7 @@ export type CollectionRecords = {
 	_superusers: SuperusersRecord
 	events: EventsRecord
 	runs: RunsRecord
+	states: StatesRecord
 	users: UsersRecord
 }
 
@@ -172,6 +190,7 @@ export type CollectionResponses = {
 	_superusers: SuperusersResponse
 	events: EventsResponse
 	runs: RunsResponse
+	states: StatesResponse
 	users: UsersResponse
 }
 

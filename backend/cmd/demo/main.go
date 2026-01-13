@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -17,48 +18,60 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill, syscall.SIGTERM, syscall.SIGQUIT)
 	defer stop()
 
-	runId, exists := os.LookupEnv("RUN_ID")
-	if !exists {
-		slog.Default().Error("RUN_ID not set, cannot proceed")
-		return
-	}
+	var runId string
+	var backendUrl string
+	var targetDurationStr string
+	var task string
 
-	// Config
-	backendUrl, exists := os.LookupEnv("BACKEND_URL")
-	if !exists {
-		slog.Default().Info("BACKEND_URL not set, using default http://localhost:8090/api/")
-		backendUrl = "http://localhost:8090/api/"
+	flag.StringVar(&runId, "run-id", os.Getenv("RUN_ID"), "Run ID (required)")
+	flag.StringVar(&backendUrl, "backend-url", "http://localhost:8090/api/", "Backend URL")
+	flag.StringVar(&targetDurationStr, "target-duration", "", "Target duration (e.g. 5s, 1m)")
+	flag.StringVar(&task, "task", utils.TASK_DOWNLOAD, "Task to run")
+	flag.Parse()
+
+	if runId == "" {
+		slog.Default().Error("run-id is required")
+		os.Exit(1)
 	}
 
 	var targetDuration time.Duration
 
-	if targetDurationStr, exists := os.LookupEnv("TARGET_DURATION"); exists {
+	if targetDurationStr != "" {
 		targetDurationParsed, err := time.ParseDuration(targetDurationStr)
 		if err != nil {
-			slog.Default().Error("Failed to parse TARGET_DURATION", "error", err)
-			return
+			slog.Default().Error("Failed to parse target-duration", "error", err)
+			os.Exit(2)
 		}
+
 		targetDuration = targetDurationParsed
 	} else {
 		targetDuration = utils.RandomDuration()
-		slog.Default().Info("TARGET_DURATION not set, using random duration", "duration", targetDuration.String())
+		slog.Default().Info("target-duration not set, using random duration", "duration", targetDuration.String())
 	}
 
-	task, ok := os.LookupEnv("RUN_TASK")
-	if !ok {
-		task = utils.TASK_DOWNLOAD
-	} else {
-		task = strings.ToLower(task)
-	}
+	task = strings.ToLower(task)
 
 	realTask, ok := simuTasks[task]
 	if !ok {
-		slog.Default().Error("Unknown RUN_TASK", "task", task)
+		slog.Default().Error("Unknown task", "task", task)
 		return
 	}
 
+	slog.Default().Info("Starting task execution",
+		"run-id", runId,
+		"backend-url", backendUrl,
+		"target-duration", targetDuration.String(),
+		"task", task,
+	)
+
 	client := client.NewClient(ctx, backendUrl, slog.Default())
-	err := realTask(client, runId, targetDuration)
+	_, err := client.StartState(runId, task)
+	if err != nil {
+		slog.Default().Error("Failed to start state", "error", err)
+		return
+	}
+
+	err = realTask(client, runId, targetDuration)
 	if err != nil {
 		slog.Default().Error("Task failed", "error", err)
 		_, err = client.UpdateRunStatusFailed(runId)
@@ -68,4 +81,12 @@ func main() {
 
 		return
 	}
+
+	_, err = client.StopState(runId, task)
+	if err != nil {
+		slog.Default().Error("Failed to stop state", "error", err)
+		return
+	}
+
+	slog.Default().Info("Task completed successfully", "task", task)
 }

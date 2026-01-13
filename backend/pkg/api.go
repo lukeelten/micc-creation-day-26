@@ -2,8 +2,10 @@ package pkg
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/lukeelten/micc-creation-day-26/backend/pkg/models"
+	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
@@ -33,6 +35,15 @@ func SetupApi(pb *pocketbase.PocketBase) error {
 		// Add event endpoint
 		e.Router.POST("/runs/{runId}/events", func(c *core.RequestEvent) error {
 			return createEvent(c)
+		})
+
+		// States endpoints
+		e.Router.GET("/states/{runId}/{task}/start", func(c *core.RequestEvent) error {
+			return startState(c)
+		})
+
+		e.Router.GET("/states/{runId}/{task}/stop", func(c *core.RequestEvent) error {
+			return stopState(c)
 		})
 
 		return e.Next()
@@ -88,4 +99,81 @@ func createEvent(c *core.RequestEvent) error {
 	}
 
 	return c.JSON(http.StatusCreated, eventData)
+}
+
+func startState(c *core.RequestEvent) error {
+	runId := c.Request.PathValue("runId")
+	task := c.Request.PathValue("task")
+
+	if runId == "" {
+		return apis.NewBadRequestError("runId is required", nil)
+	}
+
+	if task == "" {
+		return apis.NewBadRequestError("task is required", nil)
+	}
+
+	recordSearch, err := c.App.FindRecordsByFilter(models.CollectionsRuns, "run = {:run} && task = {:task}", "", 1, 0, dbx.Params{"run": runId, "task": task})
+	if err != nil {
+		return apis.NewApiError(http.StatusInternalServerError, "Failed to query run", err)
+	}
+
+	if len(recordSearch) == 0 {
+		collection, err := c.App.FindCollectionByNameOrId(models.CollectionsStates)
+		if err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to create state record", err)
+		}
+
+		record := core.NewRecord(collection)
+		record.Set("run", runId)
+		record.Set("task", string(task))
+
+		if err := c.App.Save(record); err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to create state record", err)
+		}
+
+		return c.JSON(http.StatusCreated, record)
+	}
+
+	record := recordSearch[0]
+	record.Set("updated", time.Now())
+
+	if err := c.App.Save(record); err != nil {
+		return apis.NewApiError(http.StatusInternalServerError, "Failed to save state record", err)
+	}
+
+	return c.JSON(http.StatusOK, record)
+}
+
+func stopState(c *core.RequestEvent) error {
+	runId := c.Request.PathValue("runId")
+	task := c.Request.PathValue("task")
+
+	if runId == "" {
+		return apis.NewBadRequestError("runId is required", nil)
+	}
+
+	if task == "" {
+		return apis.NewBadRequestError("task is required", nil)
+	}
+
+	recordSearch, err := c.App.FindRecordsByFilter(models.CollectionsRuns, "run = {:run} && task = {:task}", "", 1, 0, dbx.Params{"run": runId, "task": task})
+	if err != nil {
+		return apis.NewApiError(http.StatusInternalServerError, "Failed to query run", err)
+	}
+
+	if len(recordSearch) == 0 {
+		return apis.NewNotFoundError("State record not found", nil)
+	}
+
+	record := recordSearch[0]
+	now := time.Now()
+	record.Set("completed", now)
+	record.Set("updated", now)
+
+	if err := c.App.Save(record); err != nil {
+		return apis.NewApiError(http.StatusInternalServerError, "Failed to save state record", err)
+	}
+
+	return c.JSON(http.StatusOK, record)
 }

@@ -8,6 +8,7 @@ const (
 	CollectionsSuperusers    = "_superusers"
 	CollectionsEvents        = "events"
 	CollectionsRuns          = "runs"
+	CollectionsStates        = "states"
 	CollectionsUsers         = "users"
 )
 
