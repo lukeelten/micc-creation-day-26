@@ -8,8 +8,12 @@ import (
 
 // RandomDuration generates a random duration between 1 minute and 5 minutes
 func RandomDuration() time.Duration {
-	minDuration := time.Minute
-	maxDuration := 5 * time.Minute
+	return RandomDurationLimit(5 * time.Minute)
+}
+
+// RandomDuration generates a random duration between 1 minute and 5 minutes
+func RandomDurationLimit(maxDuration time.Duration) time.Duration {
+	minDuration := 5 * time.Second
 
 	// Generate random duration in nanoseconds
 	diff := maxDuration - minDuration

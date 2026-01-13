@@ -4,7 +4,25 @@ import "os"
 
 const (
 	CONFIG_QUEUE_NAME = "demo"
+	CONFIG_IMAGE_NAME = "ghcr.io/lukeelten/micc-creation-day-26-simulator:latest"
+	DEFAULT_NAMESPACE = "creation-day26"
 )
+
+func PtrBool(b bool) *bool {
+	return &b
+}
+
+func PtrString(s string) *string {
+	return &s
+}
+
+func PtrInt32(i int32) *int32 {
+	return &i
+}
+
+func PtrInt64(i int64) *int64 {
+	return &i
+}
 
 func GetNamespace() string {
 	if ns, exists := os.LookupEnv("POD_NAMESPACE"); exists {
@@ -18,7 +36,7 @@ func GetNamespace() string {
 		}
 	}
 
-	return "creation-day26"
+	return DEFAULT_NAMESPACE
 }
 
 func GetPodname() string {

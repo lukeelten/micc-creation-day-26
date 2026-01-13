@@ -19,6 +19,8 @@ type RunController struct {
 	Pb     *pocketbase.PocketBase
 	Ctx    context.Context
 	wg     sync.WaitGroup
+
+	workQueue chan string
 }
 
 func NewRunController(pb *pocketbase.PocketBase) (*RunController, error) {
@@ -28,10 +30,11 @@ func NewRunController(pb *pocketbase.PocketBase) (*RunController, error) {
 	}
 
 	return &RunController{
-		Logger: pb.Logger(),
-		Client: k8sClient,
-		Pb:     pb,
-		Ctx:    pb.RootCmd.Context(),
+		Logger:    pb.Logger(),
+		Client:    k8sClient,
+		Pb:        pb,
+		Ctx:       pb.RootCmd.Context(),
+		workQueue: make(chan string, 1000),
 	}, nil
 }
 
@@ -39,12 +42,14 @@ func (rc *RunController) Start() error {
 	go func() {
 		// Wait two seconds to allow the application to fully start
 		time.Sleep(2 * time.Second)
-		rc.Logger.Info("RunController started")
+		rc.Logger.Debug("RunController started")
 
+		rc.SetupHooks()
+		rc.StartQueue()
 		rc.Bootstrap()
 
 		rc.wg.Wait()
-		rc.Logger.Info("RunController stopped")
+		rc.Logger.Debug("RunController stopped")
 	}()
 
 	return nil
@@ -58,10 +63,11 @@ func (rc *RunController) Bootstrap() error {
 	}
 
 	for _, r := range allRuns {
-		runRecord := models.ConvertRunRecord(r)
+		runId := r.Id
+		rc.Logger.Info("Bootstrapping run into work queue", "runId", runId)
 
-		runInstance := NewRunInstance(rc, runRecord)
-		rc.wg.Go(runInstance.Start)
+		// Add the run to the work queue
+		rc.workQueue <- runId
 	}
 
 	return nil
