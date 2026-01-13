@@ -39,6 +39,8 @@ func NewApplication() (*Application, error) {
 		if _, err := os.Stat("./public"); err == nil {
 			e.App.Logger().Info("Serving static files from ./public")
 			e.Router.GET("/{path...}", apis.Static(os.DirFS("./public"), true))
+		} else {
+			e.App.Logger().Info("No ./public directory found, skipping static file serving")
 		}
 
 		return e.Next()

@@ -5,9 +5,11 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
+	"github.com/lukeelten/micc-creation-day-26/backend/pkg/client"
 	"github.com/lukeelten/micc-creation-day-26/backend/pkg/utils"
 )
 
@@ -42,4 +44,28 @@ func main() {
 		slog.Default().Info("TARGET_DURATION not set, using random duration", "duration", targetDuration.String())
 	}
 
+	task, ok := os.LookupEnv("RUN_TASK")
+	if !ok {
+		task = utils.TASK_DOWNLOAD
+	} else {
+		task = strings.ToLower(task)
+	}
+
+	realTask, ok := simuTasks[task]
+	if !ok {
+		slog.Default().Error("Unknown RUN_TASK", "task", task)
+		return
+	}
+
+	client := client.NewClient(ctx, backendUrl, slog.Default())
+	err := realTask(client, runId, targetDuration)
+	if err != nil {
+		slog.Default().Error("Task failed", "error", err)
+		_, err = client.UpdateRunStatusFailed(runId)
+		if err != nil {
+			slog.Default().Error("Failed to update run status to failed", "error", err)
+		}
+
+		return
+	}
 }

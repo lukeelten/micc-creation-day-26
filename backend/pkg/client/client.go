@@ -84,6 +84,8 @@ func (c *Client) updateRunStatus(runId, status string) (*models.RunsRecord, erro
 
 // CreateEvent creates a new event for a run
 func (c *Client) CreateEvent(runId string, event *models.EventsRecord) error {
+	event.Run = runId
+
 	url := fmt.Sprintf("%s/runs/%s/events", c.BaseURL, runId)
 
 	c.Logger.InfoContext(c.Ctx, "Creating event", "runId", runId, "eventTitle", event.Title, "eventType", event.Type)
