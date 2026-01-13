@@ -24,7 +24,7 @@ func main() {
 	var task string
 
 	flag.StringVar(&runId, "run-id", os.Getenv("RUN_ID"), "Run ID (required)")
-	flag.StringVar(&backendUrl, "backend-url", "http://localhost:8090/api/", "Backend URL")
+	flag.StringVar(&backendUrl, "backend-url", "http://localhost:8090/v1", "Backend URL")
 	flag.StringVar(&targetDurationStr, "target-duration", "", "Target duration (e.g. 5s, 1m)")
 	flag.StringVar(&task, "task", utils.TASK_DOWNLOAD, "Task to run")
 	flag.Parse()
@@ -65,10 +65,12 @@ func main() {
 	)
 
 	client := client.NewClient(ctx, backendUrl, slog.Default())
-	_, err := client.StartState(runId, task)
+	err := client.StartState(runId, task)
 	if err != nil {
 		slog.Default().Error("Failed to start state", "error", err)
 		return
+	} else {
+		slog.Default().Info("State started successfully", "task", task)
 	}
 
 	err = realTask(client, runId, targetDuration)
@@ -82,7 +84,7 @@ func main() {
 		return
 	}
 
-	_, err = client.StopState(runId, task)
+	err = client.StopState(runId, task)
 	if err != nil {
 		slog.Default().Error("Failed to stop state", "error", err)
 		return

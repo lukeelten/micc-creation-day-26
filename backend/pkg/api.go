@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"database/sql"
 	"net/http"
 	"time"
 
@@ -12,37 +13,38 @@ import (
 )
 
 func SetupApi(pb *pocketbase.PocketBase) error {
+	pb.Logger().Info("Setting up API routes...")
 
 	pb.OnServe().BindFunc(func(e *core.ServeEvent) error {
 		// Setup API routes here
 		// Update run status endpoints
-		e.Router.GET("/runs/{runId}/complete", func(c *core.RequestEvent) error {
+		e.Router.GET("/v1/runs/{runId}/complete", func(c *core.RequestEvent) error {
 			return updateRunStatus(c, models.RunsStatusCompleted)
 		})
 
-		e.Router.GET("/runs/{runId}/failed", func(c *core.RequestEvent) error {
+		e.Router.GET("/v1/runs/{runId}/failed", func(c *core.RequestEvent) error {
 			return updateRunStatus(c, models.RunsStatusFailed)
 		})
 
-		e.Router.GET("/runs/{runId}/processing", func(c *core.RequestEvent) error {
+		e.Router.GET("/v1/runs/{runId}/processing", func(c *core.RequestEvent) error {
 			return updateRunStatus(c, models.RunsStatusProcessing)
 		})
 
-		e.Router.GET("/runs/{runId}/scheduled", func(c *core.RequestEvent) error {
+		e.Router.GET("/v1/runs/{runId}/scheduled", func(c *core.RequestEvent) error {
 			return updateRunStatus(c, models.RunsStatusScheduled)
 		})
 
 		// Add event endpoint
-		e.Router.POST("/runs/{runId}/events", func(c *core.RequestEvent) error {
+		e.Router.POST("/v1/runs/{runId}/events", func(c *core.RequestEvent) error {
 			return createEvent(c)
 		})
 
 		// States endpoints
-		e.Router.GET("/states/{runId}/{task}/start", func(c *core.RequestEvent) error {
+		e.Router.GET("/v1/states/{runId}/{task}/start", func(c *core.RequestEvent) error {
 			return startState(c)
 		})
 
-		e.Router.GET("/states/{runId}/{task}/stop", func(c *core.RequestEvent) error {
+		e.Router.GET("/v1/states/{runId}/{task}/stop", func(c *core.RequestEvent) error {
 			return stopState(c)
 		})
 
@@ -113,12 +115,14 @@ func startState(c *core.RequestEvent) error {
 		return apis.NewBadRequestError("task is required", nil)
 	}
 
-	recordSearch, err := c.App.FindRecordsByFilter(models.CollectionsRuns, "run = {:run} && task = {:task}", "", 1, 0, dbx.Params{"run": runId, "task": task})
-	if err != nil {
+	c.App.Logger().Debug("/states/runId/task/start", "runId", runId, "task", task)
+
+	record, err := c.App.FindFirstRecordByFilter(models.CollectionsStates, "run = {:run} && task = {:task}", dbx.Params{"run": runId, "task": task})
+	if err != nil && err != sql.ErrNoRows {
 		return apis.NewApiError(http.StatusInternalServerError, "Failed to query run", err)
 	}
 
-	if len(recordSearch) == 0 {
+	if err == sql.ErrNoRows {
 		collection, err := c.App.FindCollectionByNameOrId(models.CollectionsStates)
 		if err != nil {
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to create state record", err)
@@ -135,8 +139,8 @@ func startState(c *core.RequestEvent) error {
 		return c.JSON(http.StatusCreated, record)
 	}
 
-	record := recordSearch[0]
 	record.Set("updated", time.Now())
+	record.Set("completed", nil)
 
 	if err := c.App.Save(record); err != nil {
 		return apis.NewApiError(http.StatusInternalServerError, "Failed to save state record", err)
@@ -157,16 +161,15 @@ func stopState(c *core.RequestEvent) error {
 		return apis.NewBadRequestError("task is required", nil)
 	}
 
-	recordSearch, err := c.App.FindRecordsByFilter(models.CollectionsRuns, "run = {:run} && task = {:task}", "", 1, 0, dbx.Params{"run": runId, "task": task})
-	if err != nil {
+	record, err := c.App.FindFirstRecordByFilter(models.CollectionsStates, "run = {:run} && task = {:task}", dbx.Params{"run": runId, "task": task})
+	if err != nil && err != sql.ErrNoRows {
 		return apis.NewApiError(http.StatusInternalServerError, "Failed to query run", err)
 	}
 
-	if len(recordSearch) == 0 {
+	if err == sql.ErrNoRows {
 		return apis.NewNotFoundError("State record not found", nil)
 	}
 
-	record := recordSearch[0]
 	now := time.Now()
 	record.Set("completed", now)
 	record.Set("updated", now)

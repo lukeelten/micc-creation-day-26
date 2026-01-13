@@ -121,7 +121,7 @@ func (c *Client) CreateEvent(runId string, event *models.EventsRecord) error {
 }
 
 // StartState creates a new state record for a task
-func (c *Client) StartState(runId string, task string) (*models.StatesRecord, error) {
+func (c *Client) StartState(runId string, task string) error {
 	url := fmt.Sprintf("%s/states/%s/%s/start", c.BaseURL, runId, string(task))
 
 	c.Logger.InfoContext(c.Ctx, "Starting state record", "runId", runId, "task", string(task), "url", url)
@@ -129,34 +129,28 @@ func (c *Client) StartState(runId string, task string) (*models.StatesRecord, er
 	req, err := http.NewRequestWithContext(c.Ctx, http.MethodGet, url, nil)
 	if err != nil {
 		c.Logger.ErrorContext(c.Ctx, "Failed to create request", "error", err)
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		return fmt.Errorf("failed to create request: %w", err)
 	}
 
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
 		c.Logger.ErrorContext(c.Ctx, "Failed to send request", "error", err)
-		return nil, fmt.Errorf("failed to send request: %w", err)
+		return fmt.Errorf("failed to send request: %w", err)
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusCreated {
+	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
 		c.Logger.ErrorContext(c.Ctx, "Unexpected status code", "statusCode", resp.StatusCode, "body", string(body))
-		return nil, fmt.Errorf("unexpected status code %d: %s", resp.StatusCode, string(body))
+		return fmt.Errorf("unexpected status code %d: %s", resp.StatusCode, string(body))
 	}
 
-	var state models.StatesRecord
-	if err := json.NewDecoder(resp.Body).Decode(&state); err != nil {
-		c.Logger.ErrorContext(c.Ctx, "Failed to decode response", "error", err)
-		return nil, fmt.Errorf("failed to decode response: %w", err)
-	}
-
-	c.Logger.InfoContext(c.Ctx, "Successfully started state record", "runId", runId, "task", string(task), "stateId", state.ID)
-	return &state, nil
+	c.Logger.InfoContext(c.Ctx, "Successfully started state record", "runId", runId, "task", string(task))
+	return nil
 }
 
 // StopState completes a state record
-func (c *Client) StopState(runId string, task string) (*models.StatesRecord, error) {
+func (c *Client) StopState(runId string, task string) error {
 	url := fmt.Sprintf("%s/states/%s/%s/stop", c.BaseURL, runId, string(task))
 
 	c.Logger.InfoContext(c.Ctx, "Stopping state record", "runId", runId, "task", string(task), "url", url)
@@ -164,28 +158,22 @@ func (c *Client) StopState(runId string, task string) (*models.StatesRecord, err
 	req, err := http.NewRequestWithContext(c.Ctx, http.MethodGet, url, nil)
 	if err != nil {
 		c.Logger.ErrorContext(c.Ctx, "Failed to create request", "error", err)
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		return fmt.Errorf("failed to create request: %w", err)
 	}
 
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
 		c.Logger.ErrorContext(c.Ctx, "Failed to send request", "error", err)
-		return nil, fmt.Errorf("failed to send request: %w", err)
+		return fmt.Errorf("failed to send request: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
 		c.Logger.ErrorContext(c.Ctx, "Unexpected status code", "statusCode", resp.StatusCode, "body", string(body))
-		return nil, fmt.Errorf("unexpected status code %d: %s", resp.StatusCode, string(body))
+		return fmt.Errorf("unexpected status code %d: %s", resp.StatusCode, string(body))
 	}
 
-	var state models.StatesRecord
-	if err := json.NewDecoder(resp.Body).Decode(&state); err != nil {
-		c.Logger.ErrorContext(c.Ctx, "Failed to decode response", "error", err)
-		return nil, fmt.Errorf("failed to decode response: %w", err)
-	}
-
-	c.Logger.InfoContext(c.Ctx, "Successfully stopped state record", "runId", runId, "task", string(task), "stateId", state.ID)
-	return &state, nil
+	c.Logger.InfoContext(c.Ctx, "Successfully stopped state record", "runId", runId, "task", string(task))
+	return nil
 }

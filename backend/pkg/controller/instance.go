@@ -2,6 +2,7 @@ package controller
 
 import (
 	"log/slog"
+	"slices"
 
 	"github.com/lukeelten/micc-creation-day-26/backend/pkg/models"
 	"github.com/pocketbase/dbx"
@@ -59,6 +60,34 @@ func (ri *RunInstance) GetActiveState() (*models.StatesRecord, error) {
 	return nil, nil
 }
 
+func (ri *RunInstance) GetLastCompletedState() (*models.StatesRecord, error) {
+	records, err := ri.GetAllStates()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, state := range records {
+		if state.Completed == nil {
+			return state, nil
+		}
+	}
+
+	slices.SortFunc(records, func(a, b *models.StatesRecord) int {
+		if a.Completed.Before(*b.Completed) {
+			return 1
+		} else if a.Completed.After(*b.Completed) {
+			return -1
+		}
+		return 0
+	})
+
+	if len(records) > 0 {
+		return records[len(records)-1], nil
+	}
+
+	return nil, nil
+}
+
 func (ri *RunInstance) Start() {
 	if ri.Record.Status == models.RunsStatusCompleted || ri.Record.Status == models.RunsStatusFailed {
 		ri.Logger.Info("RunInstance already completed or failed, skipping", "runID", ri.Record.ID)
@@ -66,8 +95,5 @@ func (ri *RunInstance) Start() {
 	}
 
 	ri.Logger.Info("Starting controller for run", "runID", ri.Record.ID, "status", ri.Record.Status)
-
-	// Find states for this run
-	states, err := ri.RC
 
 }
