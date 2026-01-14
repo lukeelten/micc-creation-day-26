@@ -60,18 +60,20 @@ func updateRunStatus(c *core.RequestEvent, status models.RunsStatusOptions) erro
 		return apis.NewBadRequestError("runId is required", nil)
 	}
 
-	record, err := c.App.FindRecordById(models.CollectionsRuns, runId)
-	if err != nil {
-		return apis.NewNotFoundError("Run not found", err)
-	}
+	return c.App.RunInTransaction(func(txApp core.App) error {
+		record, err := txApp.FindRecordById(models.CollectionsRuns, runId)
+		if err != nil {
+			return apis.NewNotFoundError("Run not found", err)
+		}
 
-	record.Set("status", string(status))
+		record.Set("status", string(status))
 
-	if err := c.App.Save(record); err != nil {
-		return apis.NewApiError(http.StatusInternalServerError, "Failed to update run status", err)
-	}
+		if err := txApp.Save(record); err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to update run status", err)
+		}
 
-	return c.JSON(http.StatusOK, models.ConvertRunRecord(record))
+		return c.JSON(http.StatusOK, models.ConvertRunRecord(record))
+	})
 }
 
 func createEvent(c *core.RequestEvent) error {
@@ -80,27 +82,29 @@ func createEvent(c *core.RequestEvent) error {
 		return apis.NewBadRequestError("runId is required", nil)
 	}
 
-	// Verify the run exists
-	_, err := c.App.FindRecordById(models.CollectionsRuns, runId)
-	if err != nil {
-		return apis.NewNotFoundError("Run not found", err)
-	}
+	return c.App.RunInTransaction(func(txApp core.App) error {
+		// Verify the run exists
+		_, err := txApp.FindRecordById(models.CollectionsRuns, runId)
+		if err != nil {
+			return apis.NewNotFoundError("Run not found", err)
+		}
 
-	// Parse the event data from request body
-	var eventData models.EventsRecord
-	if err := c.BindBody(&eventData); err != nil {
-		return apis.NewBadRequestError("Invalid request body", err)
-	}
+		// Parse the event data from request body
+		var eventData models.EventsRecord
+		if err := c.BindBody(&eventData); err != nil {
+			return apis.NewBadRequestError("Invalid request body", err)
+		}
 
-	// Set the run ID
-	eventData.Run = runId
+		// Set the run ID
+		eventData.Run = runId
 
-	// Create the event
-	if err := models.CreateEvent(c.App, &eventData); err != nil {
-		return apis.NewApiError(http.StatusInternalServerError, "Failed to create event", err)
-	}
+		// Create the event
+		if err := models.CreateEvent(txApp, &eventData); err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to create event", err)
+		}
 
-	return c.JSON(http.StatusCreated, eventData)
+		return c.JSON(http.StatusCreated, eventData)
+	})
 }
 
 func startState(c *core.RequestEvent) error {
@@ -117,29 +121,31 @@ func startState(c *core.RequestEvent) error {
 
 	c.App.Logger().Debug("/states/runId/task/start", "runId", runId, "task", task)
 
-	record, err := c.App.FindFirstRecordByFilter(models.CollectionsStates, "run = {:run} && task = {:task}", dbx.Params{"run": runId, "task": task})
-	if err != nil && err != sql.ErrNoRows {
-		return apis.NewApiError(http.StatusInternalServerError, "Failed to query run", err)
-	}
+	return c.App.RunInTransaction(func(txApp core.App) error {
+		record, err := txApp.FindFirstRecordByFilter(models.CollectionsStates, "run = {:run} && task = {:task}", dbx.Params{"run": runId, "task": task})
+		if err != nil && err != sql.ErrNoRows {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to query run", err)
+		}
 
-	if err != sql.ErrNoRows {
-		return apis.NewBadRequestError("State already started for this run and task", nil)
-	}
+		if err != sql.ErrNoRows {
+			return apis.NewBadRequestError("State already started for this run and task", nil)
+		}
 
-	collection, err := c.App.FindCollectionByNameOrId(models.CollectionsStates)
-	if err != nil {
-		return apis.NewApiError(http.StatusInternalServerError, "Failed to create state record", err)
-	}
+		collection, err := txApp.FindCollectionByNameOrId(models.CollectionsStates)
+		if err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to create state record", err)
+		}
 
-	record = core.NewRecord(collection)
-	record.Set("run", runId)
-	record.Set("task", string(task))
+		record = core.NewRecord(collection)
+		record.Set("run", runId)
+		record.Set("task", string(task))
 
-	if err := c.App.Save(record); err != nil {
-		return apis.NewApiError(http.StatusInternalServerError, "Failed to create state record", err)
-	}
+		if err := txApp.Save(record); err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to create state record", err)
+		}
 
-	return c.JSON(http.StatusCreated, record)
+		return c.JSON(http.StatusCreated, record)
+	})
 }
 
 func stopState(c *core.RequestEvent) error {
@@ -156,25 +162,27 @@ func stopState(c *core.RequestEvent) error {
 
 	c.App.Logger().Debug("/states/runId/task/stop", "runId", runId, "task", task)
 
-	record, err := c.App.FindFirstRecordByFilter(models.CollectionsStates, "run = {:run} && task = {:task}", dbx.Params{"run": runId, "task": task})
-	if err != nil && err != sql.ErrNoRows {
-		return apis.NewApiError(http.StatusInternalServerError, "Failed to query run", err)
-	}
+	return c.App.RunInTransaction(func(txApp core.App) error {
+		record, err := txApp.FindFirstRecordByFilter(models.CollectionsStates, "run = {:run} && task = {:task}", dbx.Params{"run": runId, "task": task})
+		if err != nil && err != sql.ErrNoRows {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to query run", err)
+		}
 
-	if err == sql.ErrNoRows {
-		return apis.NewNotFoundError("State record not found", nil)
-	}
+		if err == sql.ErrNoRows {
+			return apis.NewNotFoundError("State record not found", nil)
+		}
 
-	c.App.Logger().Info("Found state to stop", "stateId", record.Id, "runId", runId, "task", task)
+		c.App.Logger().Info("Found state to stop", "stateId", record.Id, "runId", runId, "task", task)
 
-	now := time.Now()
-	record.Set("completed", now)
+		now := time.Now()
+		record.Set("completed", now)
 
-	if err := c.App.Save(record); err != nil {
-		return apis.NewApiError(http.StatusInternalServerError, "Failed to save state record", err)
-	} else {
-		c.App.Logger().Info("State stopped successfully", "stateId", record.Id, "runId", runId, "task", task)
-	}
+		if err := txApp.Save(record); err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Failed to save state record", err)
+		} else {
+			c.App.Logger().Info("State stopped successfully", "stateId", record.Id, "runId", runId, "task", task)
+		}
 
-	return c.JSON(http.StatusOK, record)
+		return c.JSON(http.StatusOK, record)
+	})
 }
