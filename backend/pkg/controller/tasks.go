@@ -125,6 +125,7 @@ func (rc *RunController) runProcessing(runRecord *core.Record) error {
 
 	if activeState != nil {
 		// Task still running, nothing to do
+		rc.Logger.Debug("Task still running. Nothing to do")
 		return nil
 	}
 

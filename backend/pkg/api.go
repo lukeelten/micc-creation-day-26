@@ -161,6 +161,8 @@ func stopState(c *core.RequestEvent) error {
 		return apis.NewBadRequestError("task is required", nil)
 	}
 
+	c.App.Logger().Debug("/states/runId/task/stop", "runId", runId, "task", task)
+
 	record, err := c.App.FindFirstRecordByFilter(models.CollectionsStates, "run = {:run} && task = {:task}", dbx.Params{"run": runId, "task": task})
 	if err != nil && err != sql.ErrNoRows {
 		return apis.NewApiError(http.StatusInternalServerError, "Failed to query run", err)
@@ -170,12 +172,15 @@ func stopState(c *core.RequestEvent) error {
 		return apis.NewNotFoundError("State record not found", nil)
 	}
 
+	c.App.Logger().Info("Found state to stop", "stateId", record.Id, "runId", runId, "task", task)
+
 	now := time.Now()
 	record.Set("completed", now)
-	record.Set("updated", now)
 
 	if err := c.App.Save(record); err != nil {
 		return apis.NewApiError(http.StatusInternalServerError, "Failed to save state record", err)
+	} else {
+		c.App.Logger().Info("State stopped successfully", "stateId", record.Id, "runId", runId, "task", task)
 	}
 
 	return c.JSON(http.StatusOK, record)
