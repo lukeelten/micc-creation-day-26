@@ -22,6 +22,7 @@ func (rc *RunController) CreateKubernetesJob(runId string, taskName string, task
 	}
 
 	jobArgs := []string{
+		"-backend-url", utils.GetClientBaseUrl(),
 		"-run-id", runId,
 		"-task", taskName,
 		"-target-duration", taskDuration.String(),

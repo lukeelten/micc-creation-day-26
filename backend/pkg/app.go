@@ -10,6 +10,7 @@ import (
 	_ "github.com/lukeelten/micc-creation-day-26/backend/migrations"
 	"github.com/lukeelten/micc-creation-day-26/backend/pkg/controller"
 	"github.com/lukeelten/micc-creation-day-26/backend/pkg/utils"
+	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
@@ -58,11 +59,20 @@ func NewApplication() (*Application, error) {
 			return e.Next() // skip creating superuser if env vars are not set
 		}
 
+		// Check if superuser already exists
 		superusers, err := e.App.FindCollectionByNameOrId(core.CollectionNameSuperusers)
 		if err != nil {
 			return err
 		}
 
+		// Try to find existing superuser with the same email
+		existingRecord, err := e.App.FindFirstRecordByFilter(superusers, "email = {:email}", dbx.Params{"email": email})
+		if err == nil && existingRecord != nil {
+			e.App.Logger().Info("Superuser already exists, skipping creation", "email", email)
+			return e.Next()
+		}
+
+		// Create new superuser if none exists
 		record := core.NewRecord(superusers)
 
 		// note: the values can be eventually loaded via os.Getenv(key)
@@ -72,9 +82,11 @@ func NewApplication() (*Application, error) {
 
 		err = e.App.Save(record)
 		if err != nil {
+			e.App.Logger().Error("Failed to create superuser", "error", err, "email", email)
 			return err
 		}
 
+		e.App.Logger().Info("Superuser created successfully", "email", email)
 		return e.Next()
 	})
 
