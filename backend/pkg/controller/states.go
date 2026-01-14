@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/lukeelten/micc-creation-day-26/backend/pkg/models"
+	"github.com/lukeelten/micc-creation-day-26/backend/pkg/utils"
 	"github.com/pocketbase/dbx"
 )
 
@@ -53,14 +54,7 @@ func (rc *RunController) GetActiveState(runId string) (*models.StatesRecord, err
 		return nil, err
 	}
 
-	slices.SortFunc(records, func(a, b *models.StatesRecord) int {
-		if a.Created.Before(b.Created) {
-			return 1
-		} else if a.Created.After(b.Created) {
-			return -1
-		}
-		return 0
-	})
+	slices.SortFunc(records, utils.SortStatesByCompletedDesc)
 
 	for _, state := range records {
 		if state.Completed == nil {
@@ -77,32 +71,10 @@ func (rc *RunController) GetLastCompletedState(runId string) (*models.StatesReco
 		return nil, err
 	}
 
-	slices.SortFunc(records, func(a, b *models.StatesRecord) int {
-		if a.Created.Before(b.Created) {
-			return 1
-		} else if a.Created.After(b.Created) {
-			return -1
-		}
-		return 0
-	})
-
-	for _, state := range records {
-		if state.Completed == nil {
-			return state, nil
-		}
-	}
-
-	slices.SortFunc(records, func(a, b *models.StatesRecord) int {
-		if a.Completed.Before(*b.Completed) {
-			return 1
-		} else if a.Completed.After(*b.Completed) {
-			return -1
-		}
-		return 0
-	})
+	slices.SortFunc(records, utils.SortStatesByCompletedDesc)
 
 	if len(records) > 0 {
-		return records[len(records)-1], nil
+		return records[0], nil
 	}
 
 	return nil, nil

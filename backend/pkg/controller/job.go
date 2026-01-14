@@ -42,7 +42,7 @@ func (rc *RunController) CreateKubernetesJob(runId string, taskName string, task
 			},
 		},
 		Spec: batchv1.JobSpec{
-			BackoffLimit:            utils.PtrInt32(1),
+			BackoffLimit:            utils.PtrInt32(5),
 			Parallelism:             utils.PtrInt32(1),
 			ActiveDeadlineSeconds:   utils.PtrInt64(int64(maxRuntime.Seconds())),
 			TTLSecondsAfterFinished: utils.PtrInt32(int32(ttlAfterFinished.Seconds())),
