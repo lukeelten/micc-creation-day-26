@@ -19,7 +19,7 @@ RUN npm install && npm run build
 
 
 # Final image
-FROM registry.access.redhat.com/ubi10:latest
+FROM registry.access.redhat.com/ubi10/ubi-minimal:latest
 
 WORKDIR /app
 
