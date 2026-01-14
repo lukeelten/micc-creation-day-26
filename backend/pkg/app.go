@@ -38,9 +38,13 @@ func NewApplication() (*Application, error) {
 	pb.OnServe().BindFunc(func(e *core.ServeEvent) error {
 		if _, err := os.Stat("./public"); err == nil {
 			e.App.Logger().Info("Serving static files from ./public")
+			e.Router.GET("/config.json", func(e *core.RequestEvent) error {
+				config := utils.GetAppConfig()
+				return e.JSON(200, config)
+			})
 			e.Router.GET("/{path...}", apis.Static(os.DirFS("./public"), true))
 		} else {
-			e.App.Logger().Info("No ./public directory found, skipping static file serving")
+			e.App.Logger().Warn("No ./public directory found, skipping static file serving")
 		}
 
 		return e.Next()

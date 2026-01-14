@@ -33,6 +33,17 @@
                             {
                                 "glob": "**/*",
                                 "input": "public"
+                            },
+                            {
+                                "glob": "config.json",
+                                "input": "src/assets",
+                                "output": "/"
+                            },
+                            {
+                                "glob": "**/*",
+                                "input": "src/assets",
+                                "output": "/assets",
+                                "ignore": ["config.json"]
                             }
                         ],
                         "styles": [

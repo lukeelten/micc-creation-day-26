@@ -24,7 +24,7 @@ func main() {
 	var task string
 
 	flag.StringVar(&runId, "run-id", os.Getenv("RUN_ID"), "Run ID (required)")
-	flag.StringVar(&backendUrl, "backend-url", "http://localhost:8090/v1", "Backend URL")
+	flag.StringVar(&backendUrl, "backend-url", utils.GetClientBaseUrl(), "Backend URL")
 	flag.StringVar(&targetDurationStr, "target-duration", "", "Target duration (e.g. 5s, 1m)")
 	flag.StringVar(&task, "task", utils.TASK_DOWNLOAD, "Task to run")
 	flag.Parse()

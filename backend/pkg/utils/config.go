@@ -1,6 +1,9 @@
 package utils
 
-import "os"
+import (
+	"os"
+	"strings"
+)
 
 const (
 	CONFIG_QUEUE_NAME = "demo"
@@ -49,4 +52,33 @@ func GetPodname() string {
 	}
 
 	return "unknown-pod"
+}
+
+func GetClientBaseUrl() string {
+	if internalUrl, exists := os.LookupEnv("INTERNAL_URL"); exists {
+		return internalUrl
+	}
+
+	return "http://localhost:8080/v1"
+}
+
+type AppConfig struct {
+	BackendUrl string `json:"backendUrl"`
+	Production bool   `json:"production"`
+}
+
+func GetAppConfig() AppConfig {
+	// loosely check if it was executed using "go run"
+	isGoRun := strings.HasPrefix(os.Args[0], os.TempDir())
+	backendUrl := "http://localhost:8090"
+	if prodUrl, ok := os.LookupEnv("EXTERNAL_URL"); ok && len(prodUrl) > 0 {
+		backendUrl = prodUrl
+	}
+
+	config := AppConfig{
+		BackendUrl: backendUrl,
+		Production: !isGoRun,
+	}
+
+	return config
 }
