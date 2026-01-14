@@ -122,31 +122,24 @@ func startState(c *core.RequestEvent) error {
 		return apis.NewApiError(http.StatusInternalServerError, "Failed to query run", err)
 	}
 
-	if err == sql.ErrNoRows {
-		collection, err := c.App.FindCollectionByNameOrId(models.CollectionsStates)
-		if err != nil {
-			return apis.NewApiError(http.StatusInternalServerError, "Failed to create state record", err)
-		}
-
-		record := core.NewRecord(collection)
-		record.Set("run", runId)
-		record.Set("task", string(task))
-
-		if err := c.App.Save(record); err != nil {
-			return apis.NewApiError(http.StatusInternalServerError, "Failed to create state record", err)
-		}
-
-		return c.JSON(http.StatusCreated, record)
+	if err != sql.ErrNoRows {
+		return apis.NewBadRequestError("State already started for this run and task", nil)
 	}
 
-	record.Set("updated", time.Now())
-	record.Set("completed", nil)
+	collection, err := c.App.FindCollectionByNameOrId(models.CollectionsStates)
+	if err != nil {
+		return apis.NewApiError(http.StatusInternalServerError, "Failed to create state record", err)
+	}
+
+	record = core.NewRecord(collection)
+	record.Set("run", runId)
+	record.Set("task", string(task))
 
 	if err := c.App.Save(record); err != nil {
-		return apis.NewApiError(http.StatusInternalServerError, "Failed to save state record", err)
+		return apis.NewApiError(http.StatusInternalServerError, "Failed to create state record", err)
 	}
 
-	return c.JSON(http.StatusOK, record)
+	return c.JSON(http.StatusCreated, record)
 }
 
 func stopState(c *core.RequestEvent) error {
