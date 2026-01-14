@@ -18,6 +18,11 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill, syscall.SIGTERM, syscall.SIGQUIT)
 	defer stop()
 
+	go func() {
+		<-ctx.Done()
+		slog.Default().Info("Shutting down application...")
+	}()
+
 	var runId string
 	var backendUrl string
 	var targetDurationStr string

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
@@ -12,6 +13,11 @@ import (
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill, syscall.SIGTERM, syscall.SIGQUIT)
 	defer stop()
+
+	go func() {
+		<-ctx.Done()
+		slog.Default().Info("Shutting down application...")
+	}()
 
 	app, err := pkg.NewApplication()
 	if err != nil {
