@@ -22,7 +22,18 @@ func init() {
 }
 
 func downloadRunDataTask(c *client.Client, runId string, taskTime time.Duration) error {
-	sleepTime := utils.RandomDurationLimit(1 * time.Minute)
+	event := &models.EventsRecord{
+		Type:  models.EventsTypeInfo,
+		Title: "Run scheduled",
+	}
+	err := c.CreateEvent(runId, event)
+	if err != nil {
+		c.Logger.Error("Failed to create scheduled event", "runId", runId, "error", err)
+		return err
+	}
+
+	// simulate variable scheduling delay
+	sleepTime := utils.RandomDurationLimit(30 * time.Second)
 	select {
 	case <-c.Ctx.Done():
 		return c.Ctx.Err()

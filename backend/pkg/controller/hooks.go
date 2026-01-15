@@ -13,6 +13,16 @@ func (rc *RunController) SetupHooks() {
 		runId := e.Record.Id
 		rc.Logger.Info("New run created, adding to work queue", "runId", runId)
 
+		event := &models.EventsRecord{
+			Title: "Run created",
+			Type:  models.EventsTypeInfo,
+			Run:   runId,
+		}
+		err := models.CreateEvent(e.App, event)
+		if err != nil {
+			rc.Logger.Error("Failed to create run-created event", "runId", runId, "error", err)
+		}
+
 		// Add the new run to the work queue
 		rc.workQueue <- runId
 
