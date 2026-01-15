@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { MenuItem } from 'primeng/api';
 import { RouterModule } from '@angular/router';
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { StyleClassModule } from 'primeng/styleclass';
 import { AppConfigurator } from './app.configurator';
 import { LayoutService } from '../service/layout.service';
@@ -12,11 +12,12 @@ import { LayoutService } from '../service/layout.service';
     imports: [RouterModule, CommonModule, StyleClassModule, AppConfigurator],
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: ` <div class="layout-topbar">
-        <div class="layout-topbar-logo-container" style="width: 35rem;">
+        <div class="layout-topbar-logo-container" style="width: 45rem;">
             <button class="layout-menu-button layout-topbar-action" (click)="layoutService.onMenuToggle()">
                 <i class="pi pi-bars"></i>
             </button>
             <a class="layout-topbar-logo" routerLink="/">
+                <!--
                 <svg viewBox="0 0 54 40" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path
                         fill-rule="evenodd"
@@ -34,6 +35,8 @@ import { LayoutService } from '../service/layout.service';
                         />
                     </g>
                 </svg>
+-->
+                <img src="assets/logo.png" style="height: 4rem;" />
                 <span>MICC Creation Day 2026 - DEMO</span>
             </a>
         </div>
