@@ -29,7 +29,7 @@ export class AppMenu {
                 label: 'Processing',
                 items: [
                     { label: 'Home', icon: 'pi pi-fw pi-home', routerLink: ['/'] },
-//                    { label: 'Start Run', icon: 'pi pi-fw pi-play', routerLink: ['/start'] },
+                    { label: 'Start Run', icon: 'pi pi-fw pi-play', routerLink: ['/start'] },
                     { label: 'History', icon: 'pi pi-fw pi-history', routerLink: ['/history'] },
                 ]
             },

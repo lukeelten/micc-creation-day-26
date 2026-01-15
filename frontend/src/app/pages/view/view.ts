@@ -24,6 +24,7 @@ export class ViewRun implements OnInit, OnDestroy {
 
     public readonly runId = signal<string>('');
     public readonly authorName = signal<string>('');
+    public readonly runtimeSeconds = signal<number>(0);
 
     public readonly runResource = resource({
         params: () => ({id: this.runId()}),
@@ -67,6 +68,8 @@ export class ViewRun implements OnInit, OnDestroy {
                 this.runsRepo.getAuthorName(run.author).then(name => {
                     this.authorName.set(name);
                 });
+
+                this.runtimeSeconds.set(run.runtimeSeconds);
             }
         });
     }
@@ -103,6 +106,23 @@ export class ViewRun implements OnInit, OnDestroy {
         }
 
         return formatDate(dateString, formatStr, locale);
+    }
+
+    public formatDuration(seconds: number): string {
+        if (seconds < 0) {
+            return '0s';
+        }
+
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = seconds % 60;
+
+        const parts: string[] = [];
+        if (hours > 0) parts.push(`${hours}h`);
+        if (minutes > 0) parts.push(`${minutes}m`);
+        if (secs > 0 || parts.length === 0) parts.push(`${secs}s`);
+
+        return parts.join(' ');
     }
 
     private loadRun(runId: string): Promise<RunsResponse> {

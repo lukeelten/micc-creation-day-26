@@ -1,0 +1,35 @@
+<div class="grid grid-cols-12 gap-8">
+  <div class="col-span-12">
+    <div class="card">
+      <h1>Start a new processing run (demo software!)</h1>
+    </div>
+  </div>
+  
+  <div class="col-span-12">
+    <div class="card">
+      <form [formGroup]="runForm" (ngSubmit)="onSubmit()" class="mt-4">
+        <div class="flex flex-col gap-4">
+          <p-floatlabel>  
+            <input 
+              pInputText 
+              id="message" 
+              formControlName="message"
+              class="w-full"
+              [class.ng-invalid]="runForm.controls.message.invalid && runForm.controls.message.touched"
+            />
+            <label for="message">Custom Message</label>
+          </p-floatlabel>
+
+          <div>
+            <p-button 
+              type="submit" 
+              label="Start Run" 
+              icon="pi pi-play"
+              [disabled]="!runForm.valid" 
+            />
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

@@ -1,5 +1,5 @@
 import { CommonModule, formatDate } from "@angular/common";
-import { ChangeDetectionStrategy, Component, computed, input, Signal, signal } from "@angular/core";
+import { ChangeDetectionStrategy, Component, computed, input, Signal } from "@angular/core";
 import { CardModule } from "primeng/card";
 import { Timeline } from "primeng/timeline";
 import { EventsResponse, EventsTypeOptions } from "src/models";
@@ -18,6 +18,7 @@ interface TimelineItem {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, Timeline, CardModule],
   templateUrl: './timeline.html',
+  styleUrl: './timeline.scss'
 })
 export class TimelineComponent {
   public readonly events = input.required<EventsResponse[]>();

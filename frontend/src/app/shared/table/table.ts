@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input, model, output, viewChild } from '@angular/core';
-import { Table, TableModule } from 'primeng/table';
+import { SortableColumn, Table, TableModule } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
 import { FormsModule } from '@angular/forms';
 import { InputIcon } from 'primeng/inputicon';
@@ -52,6 +52,14 @@ export class TableComponent {
   onRowClick(event: PointerEvent, item: any) {
     event.preventDefault();
     event.stopPropagation();
+
+    if (!event || !item) {
+      return;
+    }
+
+    if (item === '') {
+      return;
+    }
 
     const id = item[this.dataKey()] as RecordIdString;
     this.click.emit(id);

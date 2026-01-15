@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, OnInit, signal } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
@@ -27,6 +27,14 @@ export class Login implements OnInit {
 
   private readonly backendService: BackendService = inject(BackendService);
   private readonly router: Router = inject(Router);
+
+  constructor() {
+    effect(() => {
+      if (this.backendService.isLoggedIn()) {
+        this.router.navigate(['/']).catch(console.error);
+      }
+    });
+  }
 
   ngOnInit(): void {
     if (this.backendService.isLoggedIn()) {

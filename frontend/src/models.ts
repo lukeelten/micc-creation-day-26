@@ -123,9 +123,9 @@ export type RunsRecord = {
 	author?: RecordIdString
 	created: IsoAutoDateString
 	id: string
-	message?: string
+	message: string
 	runtimeSeconds?: number
-	status?: RunsStatusOptions
+	status: RunsStatusOptions
 	updated: IsoAutoDateString
 }
 
@@ -139,8 +139,8 @@ export type StatesRecord = {
 	completed?: IsoDateString
 	created: IsoAutoDateString
 	id: string
-	run?: RecordIdString
-	task?: StatesTaskOptions
+	run: RecordIdString
+	task: StatesTaskOptions
 	updated: IsoAutoDateString
 }
 

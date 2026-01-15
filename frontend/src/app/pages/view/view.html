@@ -6,10 +6,16 @@
     </div>
   </div>
 
-  <div class="col-span-6">
+  <div class="col-span-3">
     <div class="card">
       <p>Author: {{ authorName() }}</p>
       <p>Created: {{ formatDate(run()?.created, "dd.MM.yy HH:mm", "de-DE") }}</p>
+    </div>
+  </div>
+
+  <div class="col-span-3">
+    <div class="card">
+      <p>Runtime: {{ formatDuration(runtimeSeconds()) }}</p>
     </div>
   </div>
 

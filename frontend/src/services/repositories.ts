@@ -1,7 +1,7 @@
 import { inject, Injectable } from "@angular/core";
 import { BackendService } from "./backend";
 import { RecordService } from "pocketbase";
-import { Collections, EventsResponse, RunsResponse, UsersResponse } from "src/models";
+import { Collections, EventsResponse, RunsRecord, RunsResponse, RunsStatusOptions, UsersResponse } from "src/models";
 
 @Injectable({
   providedIn: 'root'
@@ -33,6 +33,17 @@ export class RunsRepository {
 
   public getAuthorName(authorId: string): Promise<string> {
     return this.backendService.getRecordService<UsersResponse>(Collections.Users).getOne(authorId).then(user => user.name);
+  }
+
+  public createRun(message: string): Promise<RunsResponse> {
+    let data: any = {
+      message: message,
+      status: RunsStatusOptions.CREATED,
+      runtimeSeconds: 0,
+      author: this.backendService.currentUser.id
+    };
+
+    return this.recordService.create(data);
   }
 }
 

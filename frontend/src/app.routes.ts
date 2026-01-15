@@ -6,6 +6,7 @@ import { Home } from '@/pages/home/home';
 import { ViewRun } from '@/pages/view/view';
 import { History } from '@/pages/history/history';
 import { isAuthenticatedRouteGuard } from './services/guards';
+import { StartComponent } from '@/pages/start/start';
 
 export const appRoutes: Routes = [
     {
@@ -14,6 +15,7 @@ export const appRoutes: Routes = [
         canActivate: [isAuthenticatedRouteGuard],
         children: [
             { path: '', component: Home },
+            { path: 'start', component: StartComponent },
             { path: 'run/:id', component: ViewRun },
             { path: 'history', component: History }
         ]
