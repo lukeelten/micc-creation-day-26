@@ -833,9 +833,9 @@ func init() {
 						"min": 0,
 						"name": "message",
 						"pattern": "",
-						"presentable": false,
+						"presentable": true,
 						"primaryKey": false,
-						"required": false,
+						"required": true,
 						"system": false,
 						"type": "text"
 					},
@@ -845,7 +845,7 @@ func init() {
 						"maxSelect": 1,
 						"name": "status",
 						"presentable": false,
-						"required": false,
+						"required": true,
 						"system": false,
 						"type": "select",
 						"values": [
@@ -1044,7 +1044,7 @@ func init() {
 						"minSelect": 0,
 						"name": "run",
 						"presentable": false,
-						"required": false,
+						"required": true,
 						"system": false,
 						"type": "relation"
 					},
@@ -1065,7 +1065,7 @@ func init() {
 						"maxSelect": 1,
 						"name": "task",
 						"presentable": false,
-						"required": false,
+						"required": true,
 						"system": false,
 						"type": "select",
 						"values": [
